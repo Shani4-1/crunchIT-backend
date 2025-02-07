@@ -8,7 +8,15 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+// CORS Configuration
+const corsOptions = {
+    origin: 'http://localhost:3000', // The URL of your Next.js frontend
+    optionsSuccessStatus: 200 // For legacy browser support
+  };
+  
+  // Apply CORS Middleware with defined options
+  app.use(cors(corsOptions));
+  
 
 // Import routes
 const calcRoutes = require("./routes/calcRoutes");
