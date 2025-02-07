@@ -1,8 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-// const sequeli\qze = require('./config/dbConfig.js');  // Update path based on location
-
 const sequelize = require("./dbConfig.js");
 
 // Initialize Express app
@@ -19,28 +17,27 @@ const authRoutes = require("./routes/authRoutes");
 app.use("/api/calculate", calcRoutes);
 app.use("/api/auth", authRoutes);
 
-// Sync Database
-sequelize.sync({ force: true }) // WARNING: This will drop and recreate tables
-  .then(() => {
-    console.log("Tables have been created!");
-  })
-  .catch(err => {
-    console.error("Error syncing database:", err);
-  });
+// To prevent overwriting production data accidentally, you should condition the { force: true } flag.
+const shouldForceSync = process.env.FORCE_DB_SYNC === 'true';
 
-  const connectDB = async () => {
+// Function to connect to the database and start the server
+const startServer = async () => {
     try {
-      await sequelize.authenticate();
-      console.log('PostgreSQL connected...');
-    } catch (err) {
-      console.error('Connection error:', err);
-    }
-  };
-  
+        await sequelize.authenticate();
+        console.log('PostgreSQL connected');
 
-// Start Server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  connectDB();
-});
+        // Sync Database
+        await sequelize.sync({ force: shouldForceSync });
+        console.log(`Tables have been ${(shouldForceSync ? 'recreated' : 'synced')}.`);
+
+        // Start Server
+        const PORT = process.env.PORT || 5001;
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Unable to connect to the database:', err);
+    }
+};
+
+startServer();
